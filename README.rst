@@ -3,6 +3,13 @@ A PyTorch implementation of the Graph Neural Network Model
 
 This repo contains a PyTorch implementation of the Graph Neural Network model.
 
+The `main_simple.py <https://github.com/mtiezzi/torch_gnn/blob/master/main_simple.py>`_ example shows how to use the `EN_input <https://mtiezzi.github.io/gnn_site/tutorial.html#en-input>`_format. 
+
+
+Have a look at the Subgraph Matching/Clique detection example, contained in the file `main_subgraph.py <https://github.com/mtiezzi/torch_gnn/blob/master/main_subgraph.py>`_.
+
+An example of handling the Karate Club dataset can be found in the example `main_enkarate.py <https://github.com/mtiezzi/torch_gnn/blob/master/main_enkarate.py>`_.
+
 
 - **Website (including documentation):** https://mtiezzi.github.io/gnn_site/
 - **Author:** `Matteo Tiezzi <http://mtiezzi.github.io/>`_  
