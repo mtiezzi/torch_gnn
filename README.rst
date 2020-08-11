@@ -5,8 +5,7 @@ This repo contains a PyTorch implementation of the Graph Neural Network model.
 
 
 - **Website (including documentation):** https://mtiezzi.github.io/gnn_site/
-- **Author:** `Matteo Tiezzi <http://mtiezzi.github.io/>`_   <http://sailab.diism.unisi.it/people/matteo-tiezzi/>`_ 
-
+- **Author:** `Matteo Tiezzi <http://mtiezzi.github.io/>`_  
 Install
 -------
 
