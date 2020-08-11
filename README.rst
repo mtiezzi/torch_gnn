@@ -72,10 +72,7 @@ Citing
 
 To cite the GNN implementation please use the following publication::
 
-    Rossi, A., Tiezzi, M., Dimitri, G.M., Bianchini, M., Maggini, M., & Scarselli, F. (2018).
-    "Inductive–Transductive Learning with Graph Neural Networks", 
-    In Artificial Neural Networks in Pattern Recognition (pp.201-212). 
-    Berlin : Springer-Verlag.
+    Matteo Tiezzi, Giuseppe Marra, Stefano Melacci, Marco Maggini and Marco Gori (2020). "A Lagrangian Approach to Information Propagation in Graph Neural Networks; ECAI2020
 
 Bibtex::
 
