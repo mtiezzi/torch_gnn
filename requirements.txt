@@ -1,6 +1,5 @@
 matplotlib
 networkx
-torch
 scipy
-
-
+tensorboard
+pandas

@@ -1,6 +1,10 @@
+import numpy as np
+from abc import abstractmethod
 from torch.utils.data import DataLoader
 import torch
+from torchvision import datasets, transforms
 import networkx as nx
+import typing
 import scipy
 import scipy.io as spio
 import numpy as np
@@ -145,6 +149,7 @@ class Dataset:
 
     def to(self, device):
         if "cuda" in device.type:
+            torch.cuda.set_device(device)
             return self.cuda()
         else:
             return self.cpu()
@@ -218,6 +223,12 @@ def read_sse_ids(percentage=None, dataset=None):
 
     return train_ids, test_ids
 
+def sample_mask(idx, l):
+    """Create mask."""
+    mask = np.zeros(l)
+    mask[idx] = 1
+    return np.array(mask, dtype=np.bool)
+
 
 def get_twochainsSSE(aggregation_type, percentage=0.9, dataset="data/n-chains-connect", node_has_feature=False,
                      train_file="train_idx-", test_file="test_idx-", sparse_matrix=True):
@@ -273,9 +284,12 @@ def get_twochainsSSE(aggregation_type, percentage=0.9, dataset="data/n-chains-co
         # creation of N matrix - [node_features, graph_id (to which the node belongs)] #here there is a unique graph
         # create mask for training
         train_ids, test_ids = read_sse_ids(percentage=percentage, dataset=dataset)
-
+        # train_mask = sample_mask(train_ids, n)
+        test_ids_temp = range(0, 2000)
+        test_ids = [i for i in test_ids_temp if i not in train_ids]
         idx_train = torch.LongTensor(train_ids)
         idx_test = torch.LongTensor(test_ids)
+        idx_valid = torch.LongTensor(test_ids)
 
         return Dataset(
             "two_chainsSSE",
@@ -289,7 +303,7 @@ def get_twochainsSSE(aggregation_type, percentage=0.9, dataset="data/n-chains-co
             node_labels,
             targets,
             idx_train,
-            None,
+            idx_valid,
             idx_test,
         )
 
@@ -383,7 +397,8 @@ def get_karate(num_nodes_per_graph=None, aggregation_type="sum", sparse_matrix=T
         perm = np.random.permutation(c)
         idx_train += list(perm[:1])  # first index for training
         idx_test += list(perm[1:])  # all other indexes for testing
-
+        # idx_train += list(perm)  # first index for training
+        # idx_test += list(perm)  # all other indexes for testing
 
     idx_valid = torch.LongTensor(idx_train)
     idx_train = torch.LongTensor(idx_train)

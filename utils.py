@@ -20,6 +20,7 @@ def prepare_device(n_gpu_use, gpu_id=None):
               "on this machine.".format(n_gpu_use, n_gpu))
         n_gpu_use = n_gpu
     device = torch.device('cuda:{}'.format(gpu_id) if n_gpu_use > 0 else 'cpu')
+    torch.cuda.device(device)
     print("Executing on device: ", device)
     return device
 
@@ -128,3 +129,46 @@ class Accuracy(Metric):
         return self._num_correct / self._num_examples
 
 
+def matplotlib_imshow(img, one_channel=False):
+    if one_channel:
+        img = img.mean(dim=0)
+    img = img / 2 + 0.5  # unnormalize
+    npimg = img.numpy()
+    if one_channel:
+        plt.imshow(npimg, cmap="Greys")
+    else:
+        plt.imshow(np.transpose(npimg, (1, 2, 0)))
+
+
+def __weights_visualizer(self, layer, name, epoch):
+    # reshape filter >= firset dimension used as a batch, so we can see all filters
+    visualize = layer.mu.view(layer.in_channels * layer.out_channels, 1,
+                              layer.kernel_size[0], layer.kernel_size[1])
+    # resize in b x 1 x w x h (1 channel)
+    vis_grid = torchvision.utils.make_grid(visualize.cpu())
+    self.writer.add_image(name, vis_grid, global_step=epoch)
+
+
+def get_G_function(descr, eps):
+    GF = descr
+    if GF == "lin":
+        def G(x):
+            return x
+    elif GF == "abs":
+        def G(x):
+            return torch.abs(x)
+    elif GF == "eps":
+        def G(x):
+            return F.relu(torch.abs(x) - eps)
+    elif GF == "lineps":
+        def G(x):
+            return F.relu(x - eps) - F.relu(- x - eps)
+    elif GF == "squared":
+        def G(x):
+            return torch.pow(x, 2)
+    elif GF == "^3":
+        def G(x):
+            return torch.pow(x, 3)
+    else:
+        raise TypeError("Unexpected G function required!")
+    return G

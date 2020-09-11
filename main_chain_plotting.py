@@ -9,7 +9,7 @@ import argparse
 import utils
 import dataloader
 
-from gnn_wrapper import GNNWrapper, SemiSupGNNWrapper
+from lpgnn_wrapper import GNNWrapper, SemiSupGNNWrapper
 
 
 #
@@ -24,21 +24,30 @@ from gnn_wrapper import GNNWrapper, SemiSupGNNWrapper
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch')
-    parser.add_argument('--epochs', type=int, default=100000, metavar='N',
+    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
+                        help='input batch size for training (default: 64)')
+    parser.add_argument('--test-batch-size', type=int, default=100, metavar='N',
+                        help='input batch size for testing (default: 100)')
+    parser.add_argument('--epochs', type=int, default=300, metavar='N',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
                         help='learning rate (default: 0.0001)')
+    parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
+                        help='SGD momentum (default: 0.5)')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
     parser.add_argument('--cuda_dev', type=int, default=0,
                         help='select specific CUDA device for training')
     parser.add_argument('--n_gpu_use', type=int, default=1,
                         help='select number of CUDA device for training')
+    # parser.add_argument('--seed', type=int, default=1, metavar='S',
+    #                     help='random seed (default: 1)')
     parser.add_argument('--log-interval', type=int, default=50, metavar='N',
                         help='logging training status cadency')
+    parser.add_argument('--save-model', action='store_true', default=False,
+                        help='For Saving the current Model')
     parser.add_argument('--tensorboard', action='store_true', default=True,
                         help='For logging the model in tensorboard')
-
 
     args = parser.parse_args()
 
