@@ -58,14 +58,36 @@ class GNN(nn.Module):
         node_states = self.node_state if node_states is None else node_states
 
 
+        # while n_iterations < self.max_iterations:
+        #     with torch.no_grad():  # without memory consumption
+        #         new_state = self.state_transition_function(node_states, node_labels, edges, agg_matrix)
+        #     n_iterations += 1
+        #     # convergence condition
+        #
+        #     # if torch.dist(node_states, new_state) < self.convergence_threshold:  # maybe uses broadcst?
+        #     #     break
+        #     # with torch.no_grad():
+        #         # distance = torch.sqrt(torch.sum((new_state - node_states) ** 2, 1) + 1e-20)
+        #     distance = torch.norm(input=new_state - node_states,
+        #                           dim=1)  # checked, they are the same (in cuda, some bug)
+        #     #
+        #     # diff =torch.norm(input=new_state - node_states, dim=1) -  torch.sqrt(torch.sum((new_state - node_states) ** 2, 1) )
+        #
+        #     check_min = distance < self.convergence_threshold
+        #     node_states = new_state
+        #
+        #     if check_min.all():
+        #         break
+        # node_states = self.state_transition_function(node_states, node_labels, edges, agg_matrix) # one more to propagate gradient only on last
+
         while n_iterations < self.max_iterations:
             new_state = self.state_transition_function(node_states, node_labels, edges, agg_matrix)
             n_iterations += 1
             # convergence condition
             with torch.no_grad():
-
+                # distance = torch.sqrt(torch.sum((new_state - node_states) ** 2, 1) + 1e-20)
                 distance = torch.norm(input=new_state - node_states,
-                                      dim=1)
+                                      dim=1)  # checked, they are the same (in cuda, some bug)
 
                 check_min = distance < self.convergence_threshold
             node_states = new_state

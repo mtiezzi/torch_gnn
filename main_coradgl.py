@@ -9,7 +9,7 @@ import argparse
 import utils
 import dataloader
 
-from gnn_wrapper import  SemiSupGNNWrapper
+from gnn_wrapper import GNNWrapper, SemiSupGNNWrapper
 
 
 #
@@ -67,7 +67,7 @@ def main():
     # np.random.seed(SEED)
 
     # configugations
-    cfg = SemiSupLPGNNWrapper.Config()
+    cfg = GNNWrapper.Config()
     cfg.use_cuda = use_cuda
     cfg.device = device
 
@@ -79,27 +79,21 @@ def main():
     # cfg.momentum = args.momentum
 
     cfg.dataset_path = './data'
-    cfg.epochs = 1000
-    cfg.activation = nn.LeakyReLU()
-    cfg.state_transition_hidden_dims = [150, ]
-    cfg.output_function_hidden_dims = [30, ]
-    # cfg.state_dim = [7, 2]
-    cfg.state_dim = [350, 150]
+    cfg.epochs = args.epochs
+    cfg.lrw = args.lr
+    cfg.activation = nn.Tanh()
+    cfg.state_transition_hidden_dims = [100, 50]
+    cfg.output_function_hidden_dims = [50, ]
+    cfg.state_dim = 50
+    cfg.max_iterations = 50
+    cfg.convergence_threshold = 0.00001
     cfg.graph_based = False
-    cfg.log_interval = 10
-    cfg.lrw = 0.001
-    cfg.lrx = 0.003
-    cfg.lrλ = 0.003
     cfg.task_type = "semisupervised"
-    cfg.layers = len(cfg.state_dim) if type(
-        cfg.state_dim) is list else 1  # getting number of LPGNN layers from state_dim list
 
-    # LPGNN
-    cfg.eps = 1e-6
-    cfg.state_constraint_function = "squared"
-    cfg.loss_w = 0.0005
-    # model creation  - a unique model
-    model = SemiSupLPGNNWrapper(cfg)
+    cfg.lrw = 0.001
+
+    # model creation
+    model = SemiSupGNNWrapper(cfg)
     # dataset creation
     dset = dataloader.get_dgl_cora(aggregation_type="sum", sparse_matrix=True) # generate the dataset
     #dset = dataloader.get_dgl_citation(aggregation_type="sum") # generate the dataset
@@ -109,8 +103,10 @@ def main():
 
     # training code
     for epoch in range(1, args.epochs + 1):
-        model.global_step(epoch)
+        model.train_step(epoch)
 
+        model.valid_step(epoch)
+        model.test_step(epoch)
 
     # model.test_step()
 

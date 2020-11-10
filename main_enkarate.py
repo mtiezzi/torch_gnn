@@ -9,7 +9,7 @@ import argparse
 import utils
 import dataloader
 
-from gnn_wrapper import SemiSupGNNWrapper
+from gnn_wrapper import GNNWrapper, SemiSupGNNWrapper
 
 
 #
@@ -67,7 +67,7 @@ def main():
     # np.random.seed(SEED)
 
     # configugations
-    cfg = SemiSupLPGNNWrapper.Config()
+    cfg = GNNWrapper.Config()
     cfg.use_cuda = use_cuda
     cfg.device = device
 
@@ -82,36 +82,32 @@ def main():
     cfg.epochs = args.epochs
     cfg.lrw = args.lr
     cfg.activation = nn.Tanh()
-    cfg.state_transition_hidden_dims = [7, ]
-    cfg.output_function_hidden_dims = [3,]
-    cfg.state_dim = [10, 5]
-    # cfg.state_dim = 25
+    cfg.state_transition_hidden_dims = [5,]
+    cfg.output_function_hidden_dims = [5]
+    cfg.state_dim = 2
+    cfg.max_iterations = 50
+    cfg.convergence_threshold = 0.01
     cfg.graph_based = False
     cfg.log_interval = 10
-    cfg.lrw = 0.03
-    cfg.lrx = 0.03
-    cfg.lrλ = 0.03
-    cfg.layers = len(cfg.state_dim) if type(
-        cfg.state_dim) is list else 1  # getting number of LPGNN layers from state_dim list
     cfg.task_type = "semisupervised"
-    # LPGNN
-    cfg.eps = 0.0001
-    cfg.state_constraint_function = "eps"
-    cfg.loss_w = 0.001
 
-    # model creation  - a unique model
-    model = SemiSupLPGNNWrapper(cfg)
+    cfg.lrw = 0.001
+
+    # model creation
+    model = SemiSupGNNWrapper(cfg)
     # dataset creation
     E, N, targets, mask_train, mask_test = dataloader.old_load_karate()
     dset = dataloader.from_EN_to_GNN(E, N, targets, aggregation_type="sum", sparse_matrix=True)  # generate the dataset
     dset.idx_train = mask_train
-    dset.idx_valid = mask_test
+    dset.idx_test = mask_test
     model(dset)  # dataset initalization into the GNN
 
     # training code
     for epoch in range(1, args.epochs + 1):
-        model.global_step(epoch)
+        model.train_step(epoch)
 
+        if epoch % 10 == 0:
+            model.test_step(epoch)
     # model.test_step()
 
     # if args.save_model:

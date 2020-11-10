@@ -20,7 +20,6 @@ def prepare_device(n_gpu_use, gpu_id=None):
               "on this machine.".format(n_gpu_use, n_gpu))
         n_gpu_use = n_gpu
     device = torch.device('cuda:{}'.format(gpu_id) if n_gpu_use > 0 else 'cpu')
-    torch.cuda.device(device)
     print("Executing on device: ", device)
     return device
 
@@ -170,5 +169,6 @@ def get_G_function(descr, eps):
         def G(x):
             return torch.pow(x, 3)
     else:
-        raise TypeError("Unexpected G function required!")
+        def G(x):
+            return x
     return G

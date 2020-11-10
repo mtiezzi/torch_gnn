@@ -1,8 +1,14 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import dataloader
 import torch.optim as optim
+from abc import ABCMeta, abstractmethod
 from utils import Accuracy
 from torch.utils.tensorboard import SummaryWriter
+import torchvision
+from utils import matplotlib_imshow
+import utils
 from pygnn import GNN
 
 
@@ -32,6 +38,11 @@ class GNNWrapper:
             self.output_function_hidden_dims = None
             self.task_type = "semisupervised"
 
+            # optional
+            # self.loss_w = 1.
+            # self.energy_weight = 0.
+            # self.l2_weight = 0.
+
     def __init__(self, config: Config):
         self.config = config
 
@@ -60,7 +71,10 @@ class GNNWrapper:
         self.config.output_dim = self.dset.num_classes
 
     def _optimizer(self):
-
+        # for name, param in self.gnn.named_parameters():
+        #     if param.requires_grad:
+        #         print(name, param.data)
+        # exit()
         self.optimizer = optim.Adam(self.gnn.parameters(), lr=self.config.lrw)
         #self.optimizer = optim.SGD(self.gnn.parameters(), lr=self.config.lrw)
 
@@ -86,8 +100,11 @@ class GNNWrapper:
 
         self.optimizer.step()
 
+        # # updating accuracy
+        # batch_acc = self.TrainAccuracy.update((output, target), batch_compute=True)
         with torch.no_grad():  # Accuracy computation
-
+            # accuracy_train = torch.mean(
+            #     (torch.argmax(output[data.idx_train], dim=-1) == data.targets[data.idx_train]).float())
             self.TrainAccuracy.update(output, data.targets)
             accuracy_train = self.TrainAccuracy.compute()
 
@@ -125,6 +142,8 @@ class GNNWrapper:
 
             self.TestAccuracy.update(output, data.targets)
             acc_test = self.TestAccuracy.compute()
+            # acc_test = torch.mean(
+            #     (torch.argmax(output[data.idx_test], dim=-1) == data.targets[data.idx_test]).float())
 
             if epoch % self.config.log_interval == 0:
                 print('Test set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%)'.format(
@@ -152,6 +171,8 @@ class GNNWrapper:
 
             self.ValidAccuracy.update(output, data.targets)
             acc_valid = self.ValidAccuracy.compute()
+            # acc_test = torch.mean(
+            #     (torch.argmax(output[data.idx_test], dim=-1) == data.targets[data.idx_test]).float())
 
             if epoch % self.config.log_interval == 0:
                 print('Valid set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%)'.format(
@@ -194,6 +215,11 @@ class SemiSupGNNWrapper(GNNWrapper):
             self.state_transition_hidden_dims = None
             self.output_function_hidden_dims = None
 
+            # optional
+            # self.loss_w = 1.
+            # self.energy_weight = 0.
+            # self.l2_weight = 0.
+
     def __init__(self, config: Config):
         super().__init__(config)
 
@@ -220,12 +246,21 @@ class SemiSupGNNWrapper(GNNWrapper):
 
         loss.backward()
 
+        # with torch.no_grad():
+        #     for name, param in self.gnn.named_parameters():
+        #         if "state_transition_function" in name:
+        #             #self.writer.add_histogram("gradient " + name, param.grad, epoch)
+        #             param.grad = 0*  param.grad
+
+
 
         self.optimizer.step()
 
-
+        # # updating accuracy
+        # batch_acc = self.TrainAccuracy.update((output, target), batch_compute=True)
         with torch.no_grad():  # Accuracy computation
-
+            # accuracy_train = torch.mean(
+            #     (torch.argmax(output[data.idx_train], dim=-1) == data.targets[data.idx_train]).float())
             self.TrainAccuracy.update(output, data.targets, idx=data.idx_train)
             accuracy_train = self.TrainAccuracy.compute()
 
@@ -264,6 +299,8 @@ class SemiSupGNNWrapper(GNNWrapper):
 
             self.TestAccuracy.update(output, data.targets, idx=data.idx_test)
             acc_test = self.TestAccuracy.compute()
+            # acc_test = torch.mean(
+            #     (torch.argmax(output[data.idx_test], dim=-1) == data.targets[data.idx_test]).float())
 
             if epoch % self.config.log_interval == 0:
                 print('Test set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%)'.format(
@@ -291,6 +328,8 @@ class SemiSupGNNWrapper(GNNWrapper):
 
             self.ValidAccuracy.update(output, data.targets, idx=data.idx_valid)
             acc_valid = self.ValidAccuracy.compute()
+            # acc_test = torch.mean(
+            #     (torch.argmax(output[data.idx_test], dim=-1) == data.targets[data.idx_test]).float())
 
             if epoch % self.config.log_interval == 0:
                 print('Valid set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%)'.format(
