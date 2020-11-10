@@ -9,7 +9,7 @@ import argparse
 import utils
 import dataloader
 import torch.optim as optim
-from lgnn_wrapper import LPGNNWrapper
+from gnn_wrapper import GNNWrapper
 
 
 #
