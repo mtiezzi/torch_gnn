@@ -9,7 +9,7 @@ import argparse
 import utils
 import dataloader
 
-from lpgnn_wrapper import  SemiSupLPGNNWrapper
+from gnn_wrapper import  SemiSupGNNWrapper
 
 
 #
