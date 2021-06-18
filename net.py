@@ -14,7 +14,7 @@ class MLP(nn.Module):
         for idx in range(len(i_h_sizes) - 1):
             self.mlp.add_module("layer_{}".format(idx),
                                 nn.Linear(in_features=i_h_sizes[idx], out_features=i_h_sizes[idx + 1]))
-            self.mlp.add_module("act", activation_function)
+            self.mlp.add_module("act_{}".format(idx), activation_function)
         self.mlp.add_module("out_layer", nn.Linear(i_h_sizes[-1], out_dim))
         if activation_out is not None:
             self.mlp.add_module("out_layer_activation", activation_out)
