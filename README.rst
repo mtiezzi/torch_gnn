@@ -61,11 +61,7 @@ Simple usage example
         E, N, targets, mask_train, mask_test = dataloader.old_load_karate()
         dset = dataloader.from_EN_to_GNN(E, N, targets, aggregation_type="sum", sparse_matrix=True)  # generate the dataset
 
-        # Create the state transition function, output function, loss function and  metrics 
-        net = n.Net(input_dim, state_dim, output_dim)
-
-        
-        
+            
         #Training
                 
         for epoch in range(args.epochs):

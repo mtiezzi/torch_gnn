@@ -141,10 +141,7 @@ class Dataset:
         return self
 
     def cpu(self):
-        self.edges, self.agg_matrix, self.node_labels, self.targets, self.idx_train, self.idx_test = map(
-            lambda x: x.cuda(),
-            [self.edges, self.agg_matrix, self.node_labels, self.targets, self.idx_train, self.idx_test]
-        )
+  
         return self
 
     def to(self, device):
