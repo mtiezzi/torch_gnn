@@ -347,13 +347,14 @@ class SemiSupGNNWrapper(GNNWrapper):
 
 class RegressionWrapper(GNNWrapper):
 
-    def __call__(self, dset, state_net=None, out_net=None, criterion=None):
+    def __call__(self, dset, state_net=None, out_net=None, criterion=None, wandb=True):
         # handle the dataset info
         self._data_loader(dset)
         self.gnn = GNN(self.config, state_net, out_net).to(self.config.device)
         self._criterion(criterion)
         self._optimizer()
         self._accuracy()
+        self.wandb = wandb
 
     def _criterion(self, criterion=None):
         self.criterion = criterion
@@ -389,7 +390,8 @@ class RegressionWrapper(GNNWrapper):
 
             if epoch % self.config.log_interval == 0:
                 # where the magic happens
-                wandb.log({"epoch": epoch, "train_loss": loss, "iterations": iterations}, step=epoch)
+                if self.wandb:
+                    wandb.log({"epoch": epoch, "train_loss": loss, "iterations": iterations}, step=epoch)
 
                 print(
                     f'Train Epoch: {epoch} \t Mean Loss: {loss:.6f}\t Iterations: {iterations}')
@@ -428,7 +430,8 @@ class RegressionWrapper(GNNWrapper):
             # where the magic happens
 
             if epoch % self.config.log_interval == 0:
-                wandb.log({"epoch": epoch, "test_loss": test_loss, "iterations": iterations}, step=epoch)
+                if self.wandb:
+                    wandb.log({"epoch": epoch, "test_loss": test_loss, "iterations": iterations}, step=epoch)
                 print(
                     f'Test Epoch: {epoch} \t Mean Loss: {test_loss:.6f}\t Iterations: {iterations}')
 
@@ -457,7 +460,8 @@ class RegressionWrapper(GNNWrapper):
             # where the magic happens
 
             if epoch % self.config.log_interval == 0:
-                wandb.log({"epoch": epoch, "valid_loss": test_loss, "iterations": iterations}, step=epoch)
+                if self.wandb:
+                    wandb.log({"epoch": epoch, "valid_loss": test_loss, "iterations": iterations}, step=epoch)
                 print(
                     f'Valid Epoch: {epoch} \t Mean Loss: {test_loss:.6f}\t Iterations: {iterations}')
 
