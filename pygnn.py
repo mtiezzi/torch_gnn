@@ -24,8 +24,8 @@ class GNN(nn.Module):
         self.output_function_hidden_dims = config.output_function_hidden_dims
 
         # node state initialization
-        # self.node_state = torch.zeros(*[self.n_nodes, self.state_dim]).to(self.config.device)  # (n,d_n)
-        self.node_state = torch.rand(*[self.n_nodes, self.state_dim]).to(self.config.device)  # (n,d_n)
+        self.node_state = torch.zeros(*[self.n_nodes, self.state_dim]).to(self.config.device)  # (n,d_n)
+        # self.node_state = torch.rand(*[self.n_nodes, self.state_dim]).to(self.config.device)  # (n,d_n)
         self.converged_states = torch.zeros(*[self.n_nodes, self.state_dim]).to(self.config.device)
         # state and output transition functions
         if state_net is None:
