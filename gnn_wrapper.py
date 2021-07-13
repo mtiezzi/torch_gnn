@@ -313,7 +313,7 @@ class SemiSupGNNWrapper(GNNWrapper):
                     self.writer.add_scalar('Test Iterations',
                                            iterations,
                                            epoch)
-            return output # used for plotting
+            return output  # used for plotting
 
     def valid_step(self, epoch):
         ####  TEST
@@ -359,7 +359,9 @@ class RegressionWrapper(GNNWrapper):
         self.criterion = criterion
 
     def _accuracy(self):
-        pass
+        self.best_valid_loss = None
+        self.patience = 5000  # TODO depending on epochs
+        self.patience_counter = 0
 
     def train_step(self, epoch):
         self.gnn.train()
@@ -466,4 +468,18 @@ class RegressionWrapper(GNNWrapper):
                     self.writer.add_scalar('Valid Iterations',
                                            iterations,
                                            epoch)
+
+            if self.best_valid_loss is None:
+                # fist time populating test loss
+                self.best_valid_loss = test_loss
+
+            if test_loss < self.best_valid_loss:
+                self.best_valid_loss = test_loss
+                self.patience_counter = 0
+            else:
+                self.patience_counter += 1
+
+            if self.patience_counter == self.patience:
+                exit()
+
             return output  # used for plotting
