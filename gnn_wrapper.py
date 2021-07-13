@@ -1,15 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import dataloader
 import torch.optim as optim
 from abc import ABCMeta, abstractmethod
-from utils import Accuracy
+from .utils import Accuracy
 from torch.utils.tensorboard import SummaryWriter
 import torchvision
-from utils import matplotlib_imshow
-import utils
-from pygnn import GNN
+import wandb
+from .pygnn import GNN
 
 
 class GNNWrapper:
@@ -76,9 +74,10 @@ class GNNWrapper:
         #         print(name, param.data)
         # exit()
         self.optimizer = optim.Adam(self.gnn.parameters(), lr=self.config.lrw)
-        #self.optimizer = optim.SGD(self.gnn.parameters(), lr=self.config.lrw)
+        # self.optimizer = optim.SGD(self.gnn.parameters(), lr=self.config.lrw)
 
-    def _criterion(self):
+    def _criterion(self, ):
+
         self.criterion = nn.CrossEntropyLoss()
 
     def _accuracy(self):
@@ -252,8 +251,6 @@ class SemiSupGNNWrapper(GNNWrapper):
         #             #self.writer.add_histogram("gradient " + name, param.grad, epoch)
         #             param.grad = 0*  param.grad
 
-
-
         self.optimizer.step()
 
         # # updating accuracy
@@ -283,7 +280,7 @@ class SemiSupGNNWrapper(GNNWrapper):
                         self.writer.add_histogram(name, param, epoch)
                         self.writer.add_histogram("gradient " + name, param.grad, epoch)
         # self.TrainAccuracy.reset()
-        return output # used for plotting
+        return output  # used for plotting
 
     def predict(self, edges, agg_matrix, node_labels):
         return self.gnn(edges, agg_matrix, node_labels)
@@ -345,3 +342,127 @@ class SemiSupGNNWrapper(GNNWrapper):
                     self.writer.add_scalar('Valid Iterations',
                                            iterations,
                                            epoch)
+
+
+class RegressionWrapper(GNNWrapper):
+
+    def __call__(self, dset, state_net=None, out_net=None, criterion=None):
+        # handle the dataset info
+        self._data_loader(dset)
+        self.gnn = GNN(self.config, state_net, out_net).to(self.config.device)
+        self._criterion(criterion)
+        self._optimizer()
+        self._accuracy()
+
+    def _criterion(self, criterion=None):
+        self.criterion = criterion
+
+    def _accuracy(self):
+        pass
+
+    def train_step(self, epoch):
+        self.gnn.train()
+        data = self.dset
+        self.optimizer.zero_grad()
+        # self.TrainAccuracy.reset()
+        # output computation
+        output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
+        # loss computation - semisupervised
+        loss = self.criterion(output, data.targets)
+
+        loss.backward()
+
+        # with torch.no_grad():
+        #     for name, param in self.gnn.named_parameters():
+        #         if "state_transition_function" in name:
+        #             #self.writer.add_histogram("gradient " + name, param.grad, epoch)
+        #             param.grad = 0*  param.grad
+
+        self.optimizer.step()
+
+        # # updating accuracy
+        # batch_acc = self.TrainAccuracy.update((output, target), batch_compute=True)
+        with torch.no_grad():
+
+            if epoch % self.config.log_interval == 0:
+                # where the magic happens
+                wandb.log({"epoch": epoch, "train_loss": loss, "iterations": iterations}, step=epoch)
+
+                print(
+                    f'Train Epoch: {epoch} \t Mean Loss: {loss:.6f}\t Iterations: {iterations}')
+
+                if self.config.tensorboard:
+
+                    self.writer.add_scalar('Training Loss',
+                                           loss,
+                                           epoch)
+                    self.writer.add_scalar('Training Iterations',
+                                           iterations,
+                                           epoch)
+                    for name, param in self.gnn.named_parameters():
+                        self.writer.add_histogram(name, param, epoch)
+                        self.writer.add_histogram("gradient " + name, param.grad, epoch)
+        # self.TrainAccuracy.reset()
+        return output  # used for plotting
+
+    def predict(self, edges, agg_matrix, node_labels):
+        return self.gnn(edges, agg_matrix, node_labels)
+
+    def test_step(self, epoch):
+        ####  TEST
+        self.gnn.eval()
+        data = self.dset
+        # self.TestAccuracy.reset()
+        with torch.no_grad():
+            output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
+            test_loss = self.criterion(output, data.targets)
+
+            # self.TestAccuracy.update(output, data.targets, idx=data.idx_test)
+            # acc_test = self.TestAccuracy.compute()
+            # acc_test = torch.mean(
+            #     (torch.argmax(output[data.idx_test], dim=-1) == data.targets[data.idx_test]).float())
+
+            # where the magic happens
+
+            if epoch % self.config.log_interval == 0:
+                wandb.log({"epoch": epoch, "test_loss": test_loss, "iterations": iterations}, step=epoch)
+                print(
+                    f'Test Epoch: {epoch} \t Mean Loss: {test_loss:.6f}\t Iterations: {iterations}')
+
+                if self.config.tensorboard:
+                    self.writer.add_scalar('Test Loss',
+                                           test_loss,
+                                           epoch)
+                    self.writer.add_scalar('Test Iterations',
+                                           iterations,
+                                           epoch)
+        return output  # used for plotting
+
+    def valid_step(self, epoch):
+        ####  TEST
+        self.gnn.eval()
+        data = self.dset
+        # self.ValidAccuracy.reset()
+        with torch.no_grad():
+            output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
+            test_loss = self.criterion(output, data.targets)
+
+            # self.ValidAccuracy.update(output, data.targets, idx=data.idx_valid)
+            # acc_valid = self.ValidAccuracy.compute()
+            # acc_test = torch.mean(
+            #     (torch.argmax(output[data.idx_test], dim=-1) == data.targets[data.idx_test]).float())
+            # where the magic happens
+
+            if epoch % self.config.log_interval == 0:
+                wandb.log({"epoch": epoch, "valid_loss": test_loss, "iterations": iterations}, step=epoch)
+                print(
+                    f'Valid Epoch: {epoch} \t Mean Loss: {test_loss:.6f}\t Iterations: {iterations}')
+
+                if self.config.tensorboard:
+                    self.writer.add_scalar('Valid Loss',
+                                           test_loss,
+                                           epoch)
+                    self.writer.add_scalar('Valid Iterations',
+                                           iterations,
+                                           epoch)
+            return output  # used for plotting
