@@ -313,6 +313,7 @@ class SemiSupGNNWrapper(GNNWrapper):
                     self.writer.add_scalar('Test Iterations',
                                            iterations,
                                            epoch)
+            return output # used for plotting
 
     def valid_step(self, epoch):
         ####  TEST
