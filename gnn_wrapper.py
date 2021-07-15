@@ -3,11 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from abc import ABCMeta, abstractmethod
-from .utils import Accuracy
+from utils import Accuracy
 from torch.utils.tensorboard import SummaryWriter
 import torchvision
-import wandb
-from .pygnn import GNN
+#import wandb
+from pygnn import GNN
 
 
 class GNNWrapper:
