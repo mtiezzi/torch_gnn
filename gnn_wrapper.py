@@ -267,6 +267,8 @@ class SemiSupGNNWrapper(GNNWrapper):
         #             #self.writer.add_histogram("gradient " + name, param.grad, epoch)
         #             param.grad = 0*  param.grad
 
+
+
         self.optimizer.step()
 
         # # updating accuracy
