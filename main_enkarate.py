@@ -1,3 +1,10 @@
+"""
+main Karate
+===========
+
+This is the main file for the PyTorch Karate club example
+"""
+
 import torch
 import torchvision
 from torchvision import datasets, transforms
@@ -84,14 +91,14 @@ def main():
     cfg.activation = nn.Tanh()
     cfg.state_transition_hidden_dims = [5,]
     cfg.output_function_hidden_dims = [5]
-    cfg.state_dim = 2
+    cfg.state_dim = 5
     cfg.max_iterations = 50
-    cfg.convergence_threshold = 0.01
+    cfg.convergence_threshold = 0.1
     cfg.graph_based = False
     cfg.log_interval = 10
     cfg.task_type = "semisupervised"
 
-    cfg.lrw = 0.001
+    cfg.lrw = 0.01
 
     # model creation
     model = SemiSupGNNWrapper(cfg)

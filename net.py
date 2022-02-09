@@ -64,3 +64,72 @@ class StateTransition(nn.Module):
 
         new_state = torch.matmul(agg_matrix, edge_states)
         return new_state
+
+
+
+class GINTransition(nn.Module):
+
+    def __init__(self,
+                 node_state_dim: int,
+                 node_label_dim: int,
+                 mlp_hidden_dim: typing.Iterable[int],
+                 activation_function=nn.Tanh()
+                 ):
+        super(type(self), self).__init__()
+        d_i = node_state_dim + node_label_dim
+        d_o = node_state_dim
+        d_h = list(mlp_hidden_dim)
+        self.mlp = MLP(input_dim=d_i, hidden_sizes=d_h, out_dim=d_o, activation_function=activation_function,
+                       activation_out=activation_function)  # state transition function, non-linearity also in output
+
+    def forward(
+            self,
+            node_states,
+            node_labels,
+            edges,
+            agg_matrix,
+
+    ):
+        state_and_label = torch.cat(
+            [node_states, node_labels],
+            -1
+        )
+        aggregated_neighbourhood = torch.matmul(agg_matrix, state_and_label[edges[:, 1]])
+        node_plus_neighbourhood = state_and_label + aggregated_neighbourhood
+        new_state = self.mlp(node_plus_neighbourhood)
+        return new_state
+
+
+class GINPreTransition(nn.Module):
+
+    def __init__(self,
+                 node_state_dim: int,
+                 node_label_dim: int,
+                 mlp_hidden_dim: typing.Iterable[int],
+                 activation_function=nn.Tanh()
+                 ):
+        super(type(self), self).__init__()
+        d_i = node_state_dim +  node_label_dim
+        d_o = node_state_dim
+        d_h = list(mlp_hidden_dim)
+        self.mlp = MLP(input_dim=d_i, hidden_sizes=d_h, out_dim=d_o, activation_function=activation_function,
+                       activation_out=activation_function)
+
+    def forward(
+            self,
+            node_states,
+            node_labels,
+            edges,
+            agg_matrix,
+    ):
+        intermediate_states = self.mlp(
+            torch.cat(
+                [node_states, node_labels],
+                -1
+            )
+        )
+        new_state = (
+                torch.matmul(agg_matrix, intermediate_states[edges[:, 1]])
+                + torch.matmul(agg_matrix, intermediate_states[edges[:, 0]])
+        )
+        return new_state

@@ -76,7 +76,7 @@ class GNNWrapper:
         #         print(name, param.data)
         # exit()
         self.optimizer = optim.Adam(self.gnn.parameters(), lr=self.config.lrw)
-        #self.optimizer = optim.SGD(self.gnn.parameters(), lr=self.config.lrw)
+        # self.optimizer = optim.SGD(self.gnn.parameters(), lr=self.config.lrw)
 
     def _criterion(self):
         self.criterion = nn.CrossEntropyLoss()
@@ -92,7 +92,10 @@ class GNNWrapper:
         self.optimizer.zero_grad()
         self.TrainAccuracy.reset()
         # output computation
-        output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
+        if self.config.graph_based:
+            output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels, graph_agg=data.graph_node)
+        else:
+            output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
         # loss computation - semisupervised
         loss = self.criterion(output, data.targets)
 
@@ -131,13 +134,19 @@ class GNNWrapper:
     def predict(self, edges, agg_matrix, node_labels):
         return self.gnn(edges, agg_matrix, node_labels)
 
+    def predict(self, edges, agg_matrix, node_labels, graph_node):
+        return self.gnn(edges, agg_matrix, node_labels, graph_agg=graph_node)
+
     def test_step(self, epoch):
         ####  TEST
         self.gnn.eval()
         data = self.dset
         self.TestAccuracy.reset()
         with torch.no_grad():
-            output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
+            if self.config.graph_based:
+                output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels, graph_agg=data.graph_node)
+            else:
+                output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
             test_loss = self.criterion(output, data.targets)
 
             self.TestAccuracy.update(output, data.targets)
@@ -166,7 +175,10 @@ class GNNWrapper:
         data = self.dset
         self.ValidAccuracy.reset()
         with torch.no_grad():
-            output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
+            if self.config.graph_based:
+                output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels, graph_agg=data.graph_node)
+            else:
+                output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
             test_loss = self.criterion(output, data.targets)
 
             self.ValidAccuracy.update(output, data.targets)
@@ -240,7 +252,10 @@ class SemiSupGNNWrapper(GNNWrapper):
         self.optimizer.zero_grad()
         self.TrainAccuracy.reset()
         # output computation
-        output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
+        if self.config.graph_based:
+            output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels, data.graph_node)
+        else:
+            output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
         # loss computation - semisupervised
         loss = self.criterion(output[data.idx_train], data.targets[data.idx_train])
 
@@ -251,8 +266,6 @@ class SemiSupGNNWrapper(GNNWrapper):
         #         if "state_transition_function" in name:
         #             #self.writer.add_histogram("gradient " + name, param.grad, epoch)
         #             param.grad = 0*  param.grad
-
-
 
         self.optimizer.step()
 
@@ -283,7 +296,7 @@ class SemiSupGNNWrapper(GNNWrapper):
                         self.writer.add_histogram(name, param, epoch)
                         self.writer.add_histogram("gradient " + name, param.grad, epoch)
         # self.TrainAccuracy.reset()
-        return output # used for plotting
+        return output  # used for plotting
 
     def predict(self, edges, agg_matrix, node_labels):
         return self.gnn(edges, agg_matrix, node_labels)
@@ -294,7 +307,10 @@ class SemiSupGNNWrapper(GNNWrapper):
         data = self.dset
         self.TestAccuracy.reset()
         with torch.no_grad():
-            output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
+            if self.config.graph_based:
+                output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels, data.graph_node)
+            else:
+                output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
             test_loss = self.criterion(output[data.idx_test], data.targets[data.idx_test])
 
             self.TestAccuracy.update(output, data.targets, idx=data.idx_test)
@@ -323,7 +339,10 @@ class SemiSupGNNWrapper(GNNWrapper):
         data = self.dset
         self.ValidAccuracy.reset()
         with torch.no_grad():
-            output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
+            if self.config.graph_based:
+                output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels, data.graph_node)
+            else:
+                output, iterations = self.gnn(data.edges, data.agg_matrix, data.node_labels)
             test_loss = self.criterion(output[data.idx_valid], data.targets[data.idx_valid])
 
             self.ValidAccuracy.update(output, data.targets, idx=data.idx_valid)

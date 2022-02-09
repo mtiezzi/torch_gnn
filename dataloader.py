@@ -99,8 +99,6 @@ def nx_to_format(G, aggregation_type, sparse_matrix=True):
     return edges, agg_matrix
 
 
-
-
 class Dataset:
     def __init__(
             self,
@@ -132,16 +130,18 @@ class Dataset:
         self.idx_train = idx_train
         self.idx_valid = idx_valid
         self.idx_test = idx_test
+        self.graph_node = graph_node
 
     def cuda(self):
-        self.edges, self.agg_matrix, self.node_labels, self.targets, self.idx_train, self.idx_test = map(
+        self.edges, self.agg_matrix, self.node_labels, self.targets, self.idx_train, self.idx_test, self.graph_node = map(
             lambda x: x.cuda() if x is not None else None,
-            [self.edges, self.agg_matrix, self.node_labels, self.targets, self.idx_train, self.idx_test]
+            [self.edges, self.agg_matrix, self.node_labels, self.targets, self.idx_train, self.idx_test,
+             self.graph_node]
         )
         return self
 
     def cpu(self):
-  
+
         return self
 
     def to(self, device):
@@ -219,6 +219,7 @@ def read_sse_ids(percentage=None, dataset=None):
         test_ids = _internal("test_idx-{}.txt".format(percentage))
 
     return train_ids, test_ids
+
 
 def sample_mask(idx, l):
     """Create mask."""
@@ -604,7 +605,7 @@ def from_EN_to_GNN(E, N, targets, aggregation_type, sparse_matrix=True):
         agg_matrix_v = torch.FloatTensor(values_matrix_normalized)
         graphnode = torch.sparse.FloatTensor(agg_matrix_i, agg_matrix_v, torch.Size([num_graphs, len(N)]))
     else:
-        graphnode = torch.tensor(np.take(np.eye(num_graphs), g_ids, axis=0).T)
+        graphnode = torch.FloatTensor(np.take(np.eye(num_graphs), g_ids, axis=0).T)
     # print(graphnode.shape)
 
     e = E_full.shape[0]
@@ -629,7 +630,6 @@ def from_EN_to_GNN(E, N, targets, aggregation_type, sparse_matrix=True):
     )
 
 
-
 def old_load_karate(path="data/karate/"):
     """Load karate club dataset"""
     print('Loading karate club dataset...')
@@ -641,13 +641,13 @@ def old_load_karate(path="data/karate/"):
     # edge_inv = np.flip(edges, axis=1) # add also archs in opposite direction
     # edges = np.concatenate((edges, edge_inv))
     edges = edges[np.lexsort((edges[:, 1], edges[:, 0]))]  # reorder list of edges also by second column
-    features = sp.eye(np.max(edges+1), dtype=np.float).tocsr()
+    features = sp.eye(np.max(edges + 1), dtype=np.float).tocsr()
 
     idx_labels = np.loadtxt("{}classes.txt".format(path), dtype=np.float32)
     idx_labels = idx_labels[idx_labels[:, 0].argsort()]
 
     labels = idx_labels[:, 1]
-    #labels = np.eye(max(idx_labels[:, 1])+1, dtype=np.int32)[idx_labels[:, 1]]  # one-hot encoding of labels
+    # labels = np.eye(max(idx_labels[:, 1])+1, dtype=np.int32)[idx_labels[:, 1]]  # one-hot encoding of labels
 
     E = np.concatenate((edges, np.zeros((len(edges), 1), dtype=np.int32)), axis=1)
     N = np.concatenate((features.toarray(), np.zeros((features.shape[0], 1), dtype=np.int32)), axis=1)
@@ -666,4 +666,4 @@ def old_load_karate(path="data/karate/"):
 
     mask_test = 1. - mask_train
 
-    return E, N, labels,  torch.BoolTensor(mask_train),  torch.BoolTensor(mask_test)
+    return E, N, labels, torch.BoolTensor(mask_train), torch.BoolTensor(mask_test)

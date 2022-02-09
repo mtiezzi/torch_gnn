@@ -28,7 +28,7 @@ def main():
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
                         help='learning rate (default: 0.0001)')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
+    parser.add_argument('--no-cuda', action='store_true', default=True,
                         help='disables CUDA training')
     parser.add_argument('--cuda_dev', type=int, default=0,
                         help='select specific CUDA device for training')
@@ -87,7 +87,7 @@ def main():
     model_val = GNNWrapper(cfg)
     model_tst = GNNWrapper(cfg)
     # dataset creation
-    dset = dataloader.get_subgraph(set="sub_30_15_200", aggregation_type="sum", sparse_matrix=True)  # generate the dataset
+    dset = dataloader.get_subgraph(set="sub_10_5_200", aggregation_type="sum", sparse_matrix=True)  # generate the dataset
     model_tr(dset["train"])  # dataset initalization into the GNN
     model_val(dset["validation"], state_net=model_tr.gnn.state_transition_function, out_net=model_tr.gnn.output_function)  # dataset initalization into the GNN
     model_tst(dset["test"], state_net=model_tr.gnn.state_transition_function, out_net=model_tr.gnn.output_function)  # dataset initalization into the GNN
