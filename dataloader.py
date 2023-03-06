@@ -75,7 +75,7 @@ def nx_to_format(G, aggregation_type, sparse_matrix=True):
     edg = sorted(list(G.edges))
     edges = torch.LongTensor(edg)
 
-    adj_matrix = np.asarray(nx.to_numpy_matrix(G))
+    adj_matrix = np.asarray(nx.to_numpy_array(G))
 
     if aggregation_type == "sum":
         pass
